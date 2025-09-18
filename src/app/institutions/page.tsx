@@ -1,7 +1,12 @@
+// File: src/app/institutions/page.tsx
 import Link from "next/link";
-import { institutions } from "@/data/mock";
+import { PrismaClient } from "@prisma/client";
 
-export default function InstitutionsIndexPage() {
+const prisma = new PrismaClient();
+
+export default async function InstitutionsIndexPage() {
+  const institutions = await prisma.institution.findMany({ orderBy: { name: "asc" } });
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Institutions</h1>
