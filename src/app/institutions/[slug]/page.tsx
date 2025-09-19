@@ -21,7 +21,7 @@ export default async function InstitutionDetailPage({
   // 2) Load courses for this institution; include campus only if it exists on Course
   const courses = await prisma.course.findMany({
     where: { institutionId: inst.id },
-    orderBy: [{ awardLevel: "desc" }, { title: "asc" }],
+    orderBy: [{ nfqLevel: "desc" }, { title: "asc" }],
   });
 
   // NOTE: If you later add a Campus relation on Institution, you can re-add:
