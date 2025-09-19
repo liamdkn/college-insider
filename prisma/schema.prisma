@@ -62,6 +62,7 @@ model Course {
   // NFQ & award basics
   nfqLevel      Int?
   award         String?
+  department String?
   durationYears Float?
   deliveryMode  DeliveryMode?
   restricted    Boolean?     @default(false)
@@ -83,4 +84,5 @@ model Course {
   @@index([campusId])
   @@index([nfqLevel])
   @@index([title])
+  @@index([department])
 }

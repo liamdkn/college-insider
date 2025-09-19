@@ -30,18 +30,18 @@ export default async function CoursesIndexPage() {
     caoCode: c.caoCode ?? "",
     degreeType: c.award ?? null,           // map award -> degreeType (UI prop)
     durationYears: c.durationYears ?? null,
-    subject: "",                            // subject not in MVP schema; leave empty
+    department: (c as any).department ?? "",
     awardLevel: toAwardLevelNumber(c.nfqLevel), // map nfqLevel -> awardLevel (UI prop)
     institution: c.institution?.name ?? "",
   }));
 
-  const subjects = Array.from(new Set(courses.map((c) => c.subject).filter(Boolean))).sort();
+  const departments = Array.from(new Set(courses.map((c) => c.department).filter(Boolean))).sort();
   const institutions = Array.from(new Set(courses.map((c) => c.institution).filter(Boolean))).sort();
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Courses</h1>
-      <CoursesClient courses={courses} subjects={subjects} institutions={institutions} />
+      <CoursesClient courses={courses} departments={departments} institutions={institutions} />
     </div>
   );
 }

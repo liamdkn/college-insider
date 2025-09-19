@@ -56,6 +56,7 @@ async function main() {
     caoCode?: string | null;
     nfqLevel?: number | null;
     award?: string | null;
+    department?: string | null;
     durationYears?: number | null;
     deliveryMode?: DeliveryMode | null;
     restricted?: boolean;
@@ -96,6 +97,7 @@ async function main() {
       caoCode: course.caoCode ?? null,
       nfqLevel: course.awardLevel ?? null,          // map old awardLevel -> nfqLevel
       award: course.degreeType ?? null,             // map old degreeType -> award (BA/BSc/etc.)
+      department: course.department ?? null,
       durationYears: course.durationYears ?? null,
       deliveryMode: (course.deliveryMode as DeliveryMode) ?? DeliveryMode.FULL_TIME,
       restricted: Boolean(course.restricted ?? false),

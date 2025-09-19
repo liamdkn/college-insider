@@ -39,6 +39,7 @@ export default async function InstitutionDetailPage({
       caoCode: true,
       nfqLevel: true,
       award: true,
+      department: true,
       durationYears: true,
       deliveryMode: true,
       restricted: true,

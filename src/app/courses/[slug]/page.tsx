@@ -26,7 +26,7 @@ export default async function CourseDetailsPage({
         <div>
           <h1 className="text-3xl font-semibold">{course.title}</h1>
           <p className="text-gray-500">
-            {course.institution?.name ?? ""} • CAO {course.caoCode}
+            {course.institution?.name ?? ""} • CAO {course.caoCode ?? "—"}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -72,11 +72,11 @@ export default async function CourseDetailsPage({
       {tab === "cao" ? (
         <section className="space-y-4">
           <div className="grid md:grid-cols-3 gap-4">
-            <Info label="Degree Type" value={course.degreeType ?? "—"} />
+            <Info label="Degree Type" value={course.award ?? "—"} />
             <Info label="Duration" value={course.durationYears ? `${course.durationYears} years` : "—"} />
-            <Info label="Delivery" value={`Full-time`} />
-            <Info label="Campus" value={`TBD`} />
-            <Info label="NFQ Level" value={`${course.awardLevel ?? "—"}`} />
+            <Info label="Delivery" value={course.deliveryMode ? course.deliveryMode.replaceAll("_", " ") : "—"} />
+            <Info label="Campus" value={course.campusId ? "See campus details" : "—"} />
+            <Info label="NFQ Level" value={`${course.nfqLevel ?? "—"}`} />
             <Info label="Application" value={`Via CAO`} />
           </div>
 

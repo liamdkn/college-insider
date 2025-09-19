@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { Course, Institution } from "@prisma/client";
 
 export type UICourse = {
   slug: string;
@@ -10,21 +9,21 @@ export type UICourse = {
   caoCode: string;
   degreeType: string | null;
   durationYears: number | null;
-  subject: string;
+  department: string;
   awardLevel: 6 | 7 | 8;
   institution: string; // institution name
 };
 
 export default function CoursesClient({
   courses,
-  subjects,
-  institutions,
+  departments = [],
+  institutions = [],
 }: {
   courses: UICourse[];
-  subjects: readonly string[];
-  institutions: readonly string[];
+  departments?: readonly string[];
+  institutions?: readonly string[];
 }) {
-  const [subject, setSubject] = useState<string | null>(null);
+  const [department, setDepartment] = useState<string | null>(null);
   const [institution, setInstitution] = useState<string | null>(null);
   const [level, setLevel] = useState<6 | 7 | 8 | null>(null);
   const [years, setYears] = useState<number | null>(null);
@@ -35,7 +34,7 @@ export default function CoursesClient({
   const filtered = useMemo(() => {
     return courses.filter((c) => {
       const facetOk =
-        (subject ? c.subject === subject : true) &&
+        (department ? c.department === department : true) &&
         (institution ? c.institution === institution : true) &&
         (level ? c.awardLevel === level : true) &&
         (years ? c.durationYears === years : true);
@@ -43,10 +42,10 @@ export default function CoursesClient({
       if (!facetOk) return false;
       if (!qLower) return true;
 
-      const hay = `${c.title} ${c.caoCode} ${c.subject} ${c.institution}`.toLowerCase();
+      const hay = `${c.title} ${c.caoCode} ${c.department} ${c.institution}`.toLowerCase();
       return hay.includes(qLower);
     });
-  }, [courses, subject, institution, level, years, qLower]);
+  }, [courses, department, institution, level, years, qLower]);
 
   const groups = useMemo(() => {
     const by: { 6: UICourse[]; 7: UICourse[]; 8: UICourse[] } = { 6: [], 7: [], 8: [] };
@@ -55,7 +54,7 @@ export default function CoursesClient({
   }, [filtered]);
 
   function reset() {
-    setSubject(null);
+    setDepartment(null);
     setInstitution(null);
     setLevel(null);
     setYears(null);
@@ -98,18 +97,18 @@ export default function CoursesClient({
           </select>
         </div>
 
-        {/* Subject */}
+        {/* Department */}
         <div className="flex items-center gap-2">
-          <span className="text-sm">Subject:</span>
+          <span className="text-sm">Department:</span>
           <select
             className="border rounded-md px-2 py-1 text-sm"
-            value={subject ?? ""}
-            onChange={(e) => setSubject(e.target.value || null)}
+            value={department ?? ""}
+            onChange={(e) => setDepartment(e.target.value || null)}
           >
             <option value="">All</option>
-            {subjects.map((s) => (
-              <option key={s} value={s}>
-                {s}
+            {departments.map((d) => (
+              <option key={d} value={d}>
+                {d}
               </option>
             ))}
           </select>
@@ -171,7 +170,7 @@ export default function CoursesClient({
                           <div>
                             <h3 className="font-medium text-lg">{c.title}</h3>
                             <p className="text-sm text-gray-700">
-                              {c.caoCode} • Level {c.awardLevel} • {c.durationYears ?? "—"} yrs • {c.subject} • {c.institution}
+                              {c.caoCode} • Level {c.awardLevel} • {c.durationYears ?? "—"} yrs • {c.department} • {c.institution}
                             </p>
                           </div>
                           <Link className="text-sm font-medium text-blue-600 underline" href={`/courses/${c.slug}`}>
