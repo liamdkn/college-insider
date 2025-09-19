@@ -1,11 +1,17 @@
 // File: src/app/institutions/page.tsx
 import Link from "next/link";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db";
 
 export default async function InstitutionsIndexPage() {
-  const institutions = await prisma.institution.findMany({ orderBy: { name: "asc" } });
+  // Query only fields that exist on Institution to avoid mismatches.
+  const institutions = await prisma.institution.findMany({
+    orderBy: { name: "asc" },
+    select: {
+      slug: true,
+      name: true,
+      // no relations selected here; we keep it simple and fast
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -14,7 +20,8 @@ export default async function InstitutionsIndexPage() {
         {institutions.map((i) => (
           <li key={i.slug} className="border rounded-md p-4">
             <h3 className="font-medium">{i.name}</h3>
-            <p className="text-sm text-gray-600">{i.city ?? "—"}</p>
+            {/* City is a Campus attribute; we don't fetch it here. */}
+            <p className="text-sm text-gray-600">—</p>
             <Link className="text-sm underline" href={`/institutions/${i.slug}`}>
               View courses
             </Link>

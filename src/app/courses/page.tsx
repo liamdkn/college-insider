@@ -11,7 +11,7 @@ function toAwardLevelNumber(lvl: unknown): 6 | 7 | 8 {
     return 8;
   }
   const n = Number(lvl);
-  return (n === 6 || n === 7 || n === 8) ? (n as 6|7|8) : 8;
+  return n === 6 || n === 7 || n === 8 ? (n as 6 | 7 | 8) : 8;
 }
 
 export default async function CoursesIndexPage() {
@@ -20,17 +20,18 @@ export default async function CoursesIndexPage() {
     include: {
       institution: { select: { name: true, slug: true } },
     },
-    orderBy: [{ awardLevel: "desc" }, { title: "asc" }],
+    orderBy: [{ nfqLevel: "desc" }, { title: "asc" }],
   });
 
+  // Map to the UI shape expected by CoursesClient (back-compat fields)
   const courses: UICourse[] = rows.map((c) => ({
     slug: c.slug,
     title: c.title,
-    caoCode: c.caoCode,
-    degreeType: c.degreeType,
-    durationYears: c.durationYears,
-    subject: c.subject ?? "", // if your schema still uses scalar subject
-    awardLevel: toAwardLevelNumber(c.awardLevel),
+    caoCode: c.caoCode ?? "",
+    degreeType: c.award ?? null,           // map award -> degreeType (UI prop)
+    durationYears: c.durationYears ?? null,
+    subject: "",                            // subject not in MVP schema; leave empty
+    awardLevel: toAwardLevelNumber(c.nfqLevel), // map nfqLevel -> awardLevel (UI prop)
     institution: c.institution?.name ?? "",
   }));
 

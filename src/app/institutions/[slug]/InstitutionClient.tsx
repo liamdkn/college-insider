@@ -7,14 +7,11 @@ import type { Course, Institution } from "@prisma/client";
 export default function InstitutionClient({
   inst,
   baseCourses,
-  subjects,
 }: {
   inst: Institution;
   baseCourses: Course[];
-  subjects: readonly string[];
 }) {
-  const [subject, setSubject] = useState<string | null>(null);
-  const [level, setLevel] = useState<6 | 7 | 8 | null>(null);
+  const [level, setLevel] = useState<number | null>(null); // NFQ level
   const [years, setYears] = useState<number | null>(null);
   const [q, setQ] = useState("");
 
@@ -22,44 +19,38 @@ export default function InstitutionClient({
 
   const facts = useMemo(() => {
     const total = baseCourses.length;
-    const perLevel = { 6: 0, 7: 0, 8: 0 } as Record<6 | 7 | 8, number>;
-    const subjectCounts = new Map<string, number>();
+    const perLevel: Record<6 | 7 | 8, number> = { 6: 0, 7: 0, 8: 0 };
     baseCourses.forEach((c) => {
-      perLevel[(c.awardLevel as 6 | 7 | 8) ?? 8]++;
-      subjectCounts.set(c.subject, (subjectCounts.get(c.subject) || 0) + 1);
+      const lvl = (c.nfqLevel as 6 | 7 | 8) ?? 8;
+      if (lvl === 6 || lvl === 7 || lvl === 8) perLevel[lvl]++;
     });
-    const strengths = Array.from(subjectCounts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([s]) => s);
-    return { total, perLevel, strengths };
+    return { total, perLevel };
   }, [baseCourses]);
 
   const filtered = useMemo(() => {
     return baseCourses.filter((c) => {
-      const facetOk = (subject ? c.subject === subject : true) && (level ? c.awardLevel === level : true) && (years ? c.durationYears === years : true);
+      const facetOk = (level ? c.nfqLevel === level : true) && (years ? c.durationYears === years : true);
       if (!facetOk) return false;
       if (!qLower) return true;
-      const hay = `${c.title} ${c.caoCode} ${c.subject}`.toLowerCase();
+      const hay = `${c.title} ${c.caoCode ?? ""}`.toLowerCase();
       return hay.includes(qLower);
     });
-  }, [baseCourses, subject, level, years, qLower]);
+  }, [baseCourses, level, years, qLower]);
 
   function reset() {
-    setSubject(null);
     setLevel(null);
     setYears(null);
     setQ("");
   }
 
-  const hasActive = subject || level || years || q;
+  const hasActive = level || years || q;
 
   return (
     <div className="space-y-6">
       <header className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold">{inst.name}</h1>
-          <p className="text-gray-600">{inst.city ?? ""}</p>
+          {/* City lives on Campus; not shown here in MVP */}
         </div>
         {inst.websiteUrl ? (
           <a href={inst.websiteUrl} target="_blank" rel="noreferrer" className="px-3 py-2 rounded-md border text-sm">
@@ -69,9 +60,9 @@ export default function InstitutionClient({
       </header>
 
       <section className="grid md:grid-cols-4 gap-3">
-        <FactCard label="Location" value={inst.city ?? "—"} />
+        <FactCard label="Location" value="—" />
         <FactCard label="Award mix" value={`L8 ${facts.perLevel[8]} • L7 ${facts.perLevel[7]} • L6 ${facts.perLevel[6]}`} />
-        <FactCard label="Top subjects" value={facts.strengths.join(", ") || "—"} />
+        <FactCard label="Top subjects" value={`—`} />
         <FactCard label="Total courses" value={String(facts.total)} />
       </section>
 
@@ -90,27 +81,12 @@ export default function InstitutionClient({
 
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-sm">Subject:</span>
-          {subjects.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setSubject(subject === s ? null : s)}
-              className={`px-3 py-1 rounded-full border text-sm ${subject === s ? "bg-gray-100" : ""}`}
-              aria-pressed={subject === s}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2">
           <span className="text-sm">Award Level:</span>
           {[6, 7, 8].map((l) => (
             <button
               key={l}
               type="button"
-              onClick={() => setLevel(level === l ? null : (l as 6 | 7 | 8))}
+              onClick={() => setLevel(level === l ? null : l)}
               className={`px-3 py-1 rounded-full border text-sm ${level === l ? "bg-gray-100" : ""}`}
               aria-pressed={level === l}
             >
@@ -138,7 +114,6 @@ export default function InstitutionClient({
       {hasActive && (
         <div className="flex items-center gap-2 text-sm">
           <span className="text-gray-600">Filters:</span>
-          {subject && <Chip label={subject} onClear={() => setSubject(null)} />}
           {level && <Chip label={`Level ${level}`} onClear={() => setLevel(null)} />}
           {years && <Chip label={`${years} years`} onClear={() => setYears(null)} />}
           {q && <Chip label={`Search: \"${q}\"`} onClear={() => setQ("")} />}
@@ -148,7 +123,7 @@ export default function InstitutionClient({
 
       {(() => {
         const groups = groupByLevel(filtered);
-        const order: (6 | 7 | 8)[] = level ? [level] : [8, 7, 6];
+        const order: (6 | 7 | 8)[] = level ? [level as 6 | 7 | 8] : [8, 7, 6];
         const any = order.some((lvl) => groups[lvl].length > 0);
         if (!any) return <div className="p-4 text-sm text-gray-600 border rounded-md">No courses match your filters.</div>;
         return (
@@ -163,7 +138,7 @@ export default function InstitutionClient({
                         <div>
                           <h3 className="font-medium text-lg">{c.title}</h3>
                           <p className="text-sm text-gray-700">
-                            {c.caoCode} • Level {c.awardLevel} • {c.durationYears} yrs • {c.subject}
+                            {c.caoCode ?? "—"} • Level {c.nfqLevel ?? "—"} • {c.durationYears ?? "—"} yrs {c.award ? ` • ${c.award}` : ""}
                           </p>
                         </div>
                         <Link className="text-sm font-medium text-blue-600 underline" href={`/courses/${c.slug}`}>
@@ -184,7 +159,10 @@ export default function InstitutionClient({
 
 function groupByLevel(list: Course[]) {
   const by: { 6: Course[]; 7: Course[]; 8: Course[] } = { 6: [], 7: [], 8: [] };
-  list.forEach((c) => by[(c.awardLevel as 6 | 7 | 8) ?? 8].push(c));
+  list.forEach((c) => {
+    const lvl = (c.nfqLevel as 6 | 7 | 8) ?? 8;
+    if (lvl === 6 || lvl === 7 || lvl === 8) by[lvl].push(c);
+  });
   return by;
 }
 
