@@ -8,28 +8,72 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// enums (optional but nice)
+enum AwardLevel { L6 L7 L8 } // map from 6/7/8
+enum DeliveryMode { FULL_TIME PART_TIME BLENDED }
+
 model Institution {
-  id          String   @id @default(cuid())
-  slug        String   @unique
+  id          String    @id @default(cuid())
+  slug        String    @unique
   name        String
   city        String?
   websiteUrl  String?
-  courses     Course[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  caoCode     String?   // e.g. TR, DN, TU
+  // relations
+  campuses    Campus[]
+  courses     Course[]  // courses at the main institution (no specific campus)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Campus {
+  id             String       @id @default(cuid())
+  slug           String       @unique
+  name           String
+  city           String?
+  institutionId  String
+  institution    Institution  @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  courses        Course[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([institutionId])
+}
+
+model Subject {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String   @unique
+  courses   Course[]
 }
 
 model Course {
-  id            String   @id @default(cuid())
-  slug          String   @unique
-  title         String
-  caoCode       String
-  degreeType    String
-  durationYears Int
-  subject       String
-  awardLevel    Int       // 6, 7, or 8
-  institutionId String
-  institution   Institution @relation(fields: [institutionId], references: [id])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String       @id @default(cuid())
+  slug           String       @unique
+  title          String
+  caoCode        String       @unique
+  awardLevel     AwardLevel
+  degreeType     String?
+  durationYears  Int?
+  deliveryMode   DeliveryMode? // optional for future
+  // taxonomy
+  subjectId      String?
+  subject        Subject?      @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  // location
+  institutionId  String
+  institution    Institution   @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  campusId       String?       // nullable => main campus or institution-level
+  campus         Campus?       @relation(fields: [campusId], references: [id], onDelete: SetNull)
+
+  // optional metadata for CAO import
+  source         String?       // e.g. "cao-2025-pdf"
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([institutionId])
+  @@index([campusId])
+  @@index([subjectId])
+  @@index([awardLevel])
+  @@index([caoCode])           // unique already; still helpful
+  @@index([title])
 }

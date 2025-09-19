@@ -1,16 +1,21 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import SaveButton from "@/components/save-button";
-import { courses } from "@/data/mock";
+import { prisma } from "@/lib/db";
 
-export default function CourseDetailsPage({
+export default async function CourseDetailsPage({
   params,
   searchParams,
 }: {
   params: { slug: string };
   searchParams?: { tab?: string };
 }) {
-  const course = courses.find((c) => c.slug === params.slug);
+  // Fetch the course by slug from the DB, include institution name for display
+  const course = await prisma.course.findUnique({
+    where: { slug: params.slug },
+    include: { institution: { select: { name: true } } },
+  });
+
   if (!course) return notFound();
 
   const tab = (searchParams?.tab as "cao" | "insider") || "cao";
@@ -21,7 +26,7 @@ export default function CourseDetailsPage({
         <div>
           <h1 className="text-3xl font-semibold">{course.title}</h1>
           <p className="text-gray-500">
-            {course.institution} • CAO {course.caoCode}
+            {course.institution?.name ?? ""} • CAO {course.caoCode}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -67,11 +72,11 @@ export default function CourseDetailsPage({
       {tab === "cao" ? (
         <section className="space-y-4">
           <div className="grid md:grid-cols-3 gap-4">
-            <Info label="Degree Type" value={course.degreeType} />
-            <Info label="Duration" value={`${course.durationYears} years`} />
+            <Info label="Degree Type" value={course.degreeType ?? "—"} />
+            <Info label="Duration" value={course.durationYears ? `${course.durationYears} years` : "—"} />
             <Info label="Delivery" value={`Full-time`} />
             <Info label="Campus" value={`TBD`} />
-            <Info label="NFQ Level" value={`8`} />
+            <Info label="NFQ Level" value={`${course.awardLevel ?? "—"}`} />
             <Info label="Application" value={`Via CAO`} />
           </div>
 
